@@ -19,47 +19,17 @@ function s:setup_cmd()
       call system(g:fcitx5_remote . ' -c')
     endif
   endfunction
-  function Fcitx2zh()
-    try
-      if b:inputtoggle == 1
-        call system(g:fcitx5_remote . ' -o')
-        let b:inputtoggle = 0
-      endif
-    catch /inputtoggle/
-      let b:inputtoggle = 0
-    endtry
-  endfunction
 
   let g:loaded_fcitx = 1
 endfunction
 
-" If g:fcitx5_remote is set (to the path to `fcitx5-remove`), use it to toggle IME state.
+" If g:fcitx5_remote is set (to the path to `fcitx5-remote`), use it to toggle IME state.
 if exists("g:fcitx5_remote")
   call s:setup_cmd()
-
-" Otherwise, if python3 is available, use python and dbus to toggle IME state.
-elseif has('python3')
-  try " abort on fail
-    exe 'py3file' expand('<sfile>:r') . '.py'
-    if py3eval('fcitx_loaded')
-      function Fcitx2en()
-        py3 fcitx2en()
-      endfunction
-      function Fcitx2zh()
-        py3 fcitx2zh()
-      endfunction
-      function FcitxCurrentIM()
-        return py3eval('fcitx_current_im()')
-      endfunction
-
-      let g:loaded_fcitx = 1
-    endif
-  catch
-    if executable('fcitx5-remote')
-      let g:fcitx5_remote = 'fcitx5-remote'
-      call s:setup_cmd()
-    endif
-  endtry
+else
+  " error
+  echoerr 'fcitx.vim: fcitx5_remote is required. Please set g:fcitx5_remote to the path to `fcitx5-remote`.'
+  finish
 endif
 
 " Register autocmd if successfully loaded.
@@ -69,9 +39,6 @@ if exists("g:loaded_fcitx")
   else
     au InsertLeave * if reg_executing() == "" | call Fcitx2en() | endif
   endif
-  au InsertEnter * if reg_executing() == "" | call Fcitx2zh() | endif
-  au CmdlineEnter [/\?] if reg_executing() == "" | call Fcitx2zh() | endif
-  au CmdlineLeave [/\?] if reg_executing() == "" | call Fcitx2en() | endif
 endif
 
 " ---------------------------------------------------------------------
